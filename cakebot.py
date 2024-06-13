@@ -33,13 +33,17 @@ llm_client = cohere.Client(COHERE_TOKEN)
 
 
 class Bot:
+    
+    def __init__(self):
+        self.application = Application.builder().token(TG_TOKEN).build()
+        
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Starts the conversation and asks the user about biscuit."""
         reply_keyboard = [['Ванильный', 'Радуга', 'Шоколадный']]
 
         await update.message.reply_text(
             'Привет! Я конструктор тортов. Помогу вам собрать свой тортик.'
-            'Отправь /cancel чтобы остановить диалог.\n\n'
+            'Отправьте /cancel чтобы остановить диалог.\n\n'
             'Какой вам нужен бисквит?',
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, 
@@ -57,8 +61,8 @@ class Bot:
         user = update.message.from_user
         logger.info("Toppings of %s: %s", user.first_name, update.message.text)
         await update.message.reply_text(
-            "I see! Please send me a photo of yourself, "
-            "so I know what you look like, or send /skip if you don't want to.",
+            f"Понял. Вы выбрали бисквит {update.message.text}."
+            "Напишите какую начинку вы хотите, ил отправьте /skip чтобы пропустить.",
             reply_markup=ReplyKeyboardRemove(),
         )
 
@@ -91,7 +95,7 @@ class Bot:
         """Stores the info about the user and ends the conversation."""
         user = update.message.from_user
         logger.info("Extra of %s: %s", user.first_name, update.message.text)
-        await update.message.reply_text("Thank you! I hope we can talk again some day.")
+        await update.message.reply_text("Спасибо! Надеюсь, поболтаем еще.")
 
         return ConversationHandler.END
 
@@ -100,7 +104,7 @@ class Bot:
         user = update.message.from_user
         logger.info("User %s canceled the conversation.", user.first_name)
         await update.message.reply_text(
-            "Bye! I hope we can talk again some day.", reply_markup=ReplyKeyboardRemove()
+            "Пока! Надеюсь, поболтаем еще.", reply_markup=ReplyKeyboardRemove()
         )
 
         return ConversationHandler.END
@@ -110,8 +114,8 @@ class Bot:
         user = update.effective_user
         orders = actual_orders()
         message = rf"""
-            Hi {user.mention_markdown_v2()}\!
-            List of cake orders:
+            Привет {user.mention_markdown_v2()}\!
+            Список заказов:
             ```{orders.to_markdown(index=False)}```
         """
         await update.message.reply_text(
@@ -130,9 +134,9 @@ class Bot:
 def main():
     """Start the bot."""
     bot = Bot()
-    application = Application.builder().token(TG_TOKEN).build()
-    application.add_handler(CommandHandler('orders', bot.orders))
-    application.add_handler(CommandHandler('llm', bot.llm))
+    bot.application = Application.builder().token(TG_TOKEN).build()
+    bot.application.add_handler(CommandHandler('orders', bot.orders))
+    bot.application.add_handler(CommandHandler('llm', bot.llm))
     # application.add_handler(MessageHandler(
     #     filters.TEXT & ~filters.COMMAND, bot.echo))
 
@@ -147,9 +151,9 @@ def main():
         fallbacks=[CommandHandler('cancel', bot.cancel)],
     )
 
-    application.add_handler(conv_handler)
+    bot.application.add_handler(conv_handler)
 
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    bot.application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == '__main__':
