@@ -11,7 +11,7 @@ import pandas as pd
 load_dotenv()
 
 SHEET_ID = os.getenv('SHEET_ID')
-G_IDS = ['78600856', '1428459785']
+G_IDS = ['959471842', '299460191']
 
 EXPORT_URL = 'https://docs.google.com/spreadsheets/d/{id}/export?gid={gid}&format=csv'
 
