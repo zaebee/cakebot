@@ -22,9 +22,9 @@ def _cakes_df(url):
     df = df.rename(str.strip, axis='columns')
     df = df.rename(columns={
         'дата': 'date',
-        'торт': 'cake',
+        #'торт': 'cake',
         'десерты (торт)': 'cake',
-        'билеты': 'cake',
+        #'билеты': 'cake',
         'время': 'time',
         'заказчик': 'client',
         'телефон': 'phone',
@@ -47,6 +47,7 @@ def _cakes_df(url):
 
 def _clean_df(df, filter_words=''):
     filters = df.cake.str.match('-')
+    filters |= df.cake.str.match('нет')
     for word in filter_words:
         filters |= df.cake.str.contains(word, case=False)
     return df[~filters]
@@ -55,11 +56,13 @@ def _clean_df(df, filter_words=''):
 def actual_orders():
     """Returns list of actual cake order."""
     dfs = []
-    filter_words = ['сбор', 'нет', 'думают', 'думает']
+    filter_words = ['сбор', 'думают', 'думает']
     for gid in G_IDS:
         url = EXPORT_URL.format(id=SHEET_ID, gid=gid)
         df = _clean_df(_cakes_df(url), filter_words)
-        dfs.append(df[df.date >= np.datetime64(dt.date.today())])
+        dfs.append(
+            df[df.date >= np.datetime64(dt.date.today())][['date', 'day', 'time', 'cake']]
+        )
 
     df = pd.concat(dfs)
     df = df.reset_index().drop_duplicates(subset=['date', 'time'])
